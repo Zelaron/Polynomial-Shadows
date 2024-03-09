@@ -9,25 +9,25 @@ d=Exponent[P,z];
 precision=10*d+n;
 currentFunc=Expand[P^n];
 roots={};
-Do[roots=Join[roots,ReIm[z]/. NSolve[Simplify[currentFunc/(P^(n-m))]==0,WorkingPrecision->precision]];
+Do[roots=Join[roots,ReIm[z]/.NSolve[Simplify[currentFunc/(P^(n-m))]==0,WorkingPrecision->precision]];
 currentFunc=D[currentFunc,z],{m,1,n-1}];
-Do[roots=Join[roots,ReIm[z]/. NSolve[currentFunc==0,WorkingPrecision->precision]];
+Do[roots=Join[roots,ReIm[z]/.NSolve[currentFunc==0,WorkingPrecision->precision]];
 currentFunc=D[currentFunc,z],{m,n,n*d-1}];
 
 (* Additional points for the final plot *)
-rootsOfP=ReIm[z]/. NSolve[P==0,z,WorkingPrecision->precision];
-rootsOfPPrime=ReIm[z]/. NSolve[D[P,z]==0,z,WorkingPrecision->precision];
+rootsOfP=ReIm[z]/.NSolve[P==0,z,WorkingPrecision->precision];
+rootsOfPPrime=ReIm[z]/.NSolve[D[P,z]==0,z,WorkingPrecision->precision];
 centerOfMassOfZP=Mean[rootsOfP];
 
 (* Determine branch points of equation (1.4) in the z-plane; a subset of these points serves as an appoximation of the boundary of the shadow *)
 resStepLength=1/100; (* A smaller step length yields more branch points in the final plot *)
-FF=Sum[((\[Alpha]-k)/k!) D[P,{z,k}] D[w^(d-k)],{k,0,d}];
+FF=Sum[((\[Alpha]-k)/k!)D[P,{z,k}]D[w^(d-k)],{k,0,d}];
 RES=Resultant[FF,D[FF,w],w];
 
 (* Attempt to calculate resultantRoots with error handling *)
 resultantRoots={};
-Do[rootsAttempt=Quiet[NSolve[RES==0/. \[Alpha]->\[Alpha]Val,z,WorkingPrecision->precision]];
-If[rootsAttempt=!={},resultantRoots=Join[resultantRoots,ReIm[z]/. rootsAttempt]],{\[Alpha]Val,0+resStepLength,d-resStepLength,resStepLength}];
+Do[rootsAttempt=Quiet[NSolve[RES==0/.\[Alpha]->\[Alpha]Val,z,WorkingPrecision->precision]];
+If[rootsAttempt=!={},resultantRoots=Join[resultantRoots,ReIm[z]/.rootsAttempt]],{\[Alpha]Val,0+resStepLength,d-resStepLength,resStepLength}];
 
 (* Create the plot and export it to Directory[] as a PDF file *)
 rootRadius=Max[0.0015,(14054-Length[roots])/2265000];
