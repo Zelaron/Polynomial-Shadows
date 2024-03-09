@@ -1,7 +1,7 @@
 (* This program was used to create the plots of the polynomials shadows in Fig. 2 in the article "Rodrigues' Descendants of a Polynomial and Boutroux Curves", see https://doi.org/10.1007/s00365-023-09657-x *)
 
 (* Choose the polynomial P and the exponent n. Nothing else needs to be changed *)
-P=z (z-12) (z-2-8 I) (z-8-7 I);
+P=z(z-12)(z-2-8I)(z-8-7I);
 n=15;
 
 (* Finds the union of the roots of all orders of the derivative of P^n. Note that we remove the multiple roots at the zeros of P when m<n in order to speed up the computation of NSolve significantly *)
@@ -29,7 +29,7 @@ resultantRoots={};
 Do[rootsAttempt=Quiet[NSolve[RES==0/. \[Alpha]->\[Alpha]Val,z,WorkingPrecision->precision]];
 If[rootsAttempt=!={},resultantRoots=Join[resultantRoots,ReIm[z]/. rootsAttempt]],{\[Alpha]Val,0+resStepLength,d-resStepLength,resStepLength}];
 
-(* Draw the plot, and export it to Directory[] as a PDF file *)
+(* Create the plot and export it to Directory[] as a PDF file *)
 rootRadius=Max[0.0015,(14054-Length[roots])/2265000];
 convHullDims={Max[#]-Min[#]&/@Transpose[roots]};
 rectSize=Max[convHullDims]/600;
