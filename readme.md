@@ -1,3 +1,4 @@
+![Wolfram spirals](https://github.com/Ionosi/assets/blob/main/shadows.jpg?raw=true)
 # Visualization of Polynomial Shadows
 
 This repository contains Mathematica code for plotting approximations of the shadows of polynomials. These approximations consist of the union of all roots of all orders of the derivative of a polynomial raised to a specified power. The asymptotic objects, emerging as the power approaches infinity, are discussed in my article "Rodrigues' Descendants of a Polynomial and Boutroux Curves" at https://doi.org/10.1007/s00365-023-09657-x
