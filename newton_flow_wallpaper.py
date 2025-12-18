@@ -23,19 +23,17 @@ import matplotlib.pyplot as plt
 # ╔══════════════════════════════════════════════════════════════════════════════╗
 # ║                              USER INPUT SECTION                              ║
 # ║                                                                              ║
-# ║  Define your function R(z) = P(z) / Q(z) by specifying roots.               ║
-# ║  For a polynomial, leave DENOMINATOR_ROOTS empty.                           ║
+# ║  Define your function R(z) = P(z) / Q(z) by specifying roots.                ║
+# ║  For a polynomial, leave DENOMINATOR_ROOTS empty.                            ║
 # ╚══════════════════════════════════════════════════════════════════════════════╝
 
 # Numerator roots (zeros of R) - these are the attractors in Newton's method
-# NUMERATOR_ROOTS = [19+3j, 17-4j, -18-12j]
-NUMERATOR_ROOTS = [-10+7j, -9+3j, -5-4j, 4-7j, 8+5j]
+NUMERATOR_ROOTS = [19+3j, 17-4j, -18-12j]
 
 # Denominator roots (poles of R) - leave empty [] for a polynomial
 # Example polynomial: DENOMINATOR_ROOTS = []
 # Example rational:   DENOMINATOR_ROOTS = [9-6j, 5+6j]
-# DENOMINATOR_ROOTS = [9-6j, 5+6j]
-DENOMINATOR_ROOTS = []
+DENOMINATOR_ROOTS = [9-6j, 5+6j]
 
 # Optional leading coefficients (usually just leave as 1)
 NUMERATOR_COEFF = 1
