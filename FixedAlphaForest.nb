@@ -1,42 +1,128 @@
-(* This program was used to create the plots of the polynomials shadows in Fig. 2 in the article "Rodrigues' Descendants of a Polynomial and Boutroux Curves", see https://doi.org/10.1007/s00365-023-09657-x *)
+(* Rodrigues' Descendants: Plot zeros of m-th derivative of P^n *)
+(* Based on "Rodrigues' Descendants of a Polynomial and Boutroux Curves" *)
+(* by Bøgvad, Hägg, and Shapiro (2023) *)
 
-(* Choose the polynomial P and the exponent n. Nothing else needs to be changed *)
-P=z(z-12)(z-2-8I)(z-8-7I);
-n=15;
+(* === PARAMETERS === *)
+P = (z-1)(z-6)(z-3I);
+n = 50;                        (* Exponent *)
+m = 50;                        (* Order of derivative; set m = n for \[Alpha] = 1 *)
 
-(* Finds the union of the roots of all orders of the derivative of P^n. Note that we remove the multiple roots at the zeros of P when m<n in order to speed up the computation of NSolve significantly *)
-d=Exponent[P,z];
-precision=10*d+n;
-currentFunc=Expand[P^n];
-roots={};
-Do[roots=Join[roots,ReIm[z]/.NSolve[Simplify[currentFunc/(P^(n-m))]==0,WorkingPrecision->precision]];
-currentFunc=D[currentFunc,z],{m,1,n-1}];
-Do[roots=Join[roots,ReIm[z]/.NSolve[currentFunc==0,WorkingPrecision->precision]];
-currentFunc=D[currentFunc,z],{m,n,n*d-1}];
+(* === DERIVED QUANTITIES === *)
+d = Exponent[Expand[P], z];
+precision = 100;
+\[Alpha] = m/n;
 
-(* Additional points for the final plot *)
-rootsOfP=ReIm[z]/.NSolve[P==0,z,WorkingPrecision->precision];
-rootsOfPPrime=ReIm[z]/.NSolve[D[P,z]==0,z,WorkingPrecision->precision];
-centerOfMassOfZP=Mean[rootsOfP];
+(* === COMPUTE ZEROS === *)
+(* Zeros of d^m/dz^m [P^n] using high-precision polynomial *)
+Pexpanded = Expand[P^n];
+derivative = D[Pexpanded, {z, m}];
 
-(* Determine branch points of equation (1.4) in the z-plane; a subset of these points serves as an appoximation of the boundary of the shadow *)
-resStepLength=1/100; (* A smaller step length yields more branch points in the final plot *)
-FF=Sum[((\[Alpha]-k)/k!)D[P,{z,k}]D[w^(d-k)],{k,0,d}];
-RES=Resultant[FF,D[FF,w],w];
+rootsOfDerivative = {Re@#, Im@#} & /@ 
+  (z /. NSolve[derivative == 0, z, WorkingPrecision -> precision]);
 
-(* Attempt to calculate resultantRoots with error handling *)
-resultantRoots={};
-Do[rootsAttempt=Quiet[NSolve[RES==0/.\[Alpha]->\[Alpha]Val,z,WorkingPrecision->precision]];
-If[rootsAttempt=!={},resultantRoots=Join[resultantRoots,ReIm[z]/.rootsAttempt]],{\[Alpha]Val,0+resStepLength,d-resStepLength,resStepLength}];
+(* Zeros of P *)
+rootsOfP = {Re@#, Im@#} & /@ 
+  (z /. NSolve[P == 0, z, WorkingPrecision -> precision]);
 
-(* Create the plot and export it to Directory[] as a PDF file *)
-rootRadius=Max[0.0015,(14054-Length[roots])/2265000];
-convHullDims={Max[#]-Min[#]&/@Transpose[roots]};
-rectSize=Max[convHullDims]/600;
-critPointsRectSize=Max[convHullDims]/150;
-s=Max[convHullDims]/35;
+(* Critical points of P (zeros of P') *)
+criticalPts = {Re@#, Im@#} & /@ 
+  (z /. NSolve[D[P, z] == 0, z, WorkingPrecision -> precision]);
 
-finalPlot=Show[Graphics[{{Black,PointSize[.02],Point[rootsOfP]},{Opacity[0.7],Red,PointSize[rootRadius],Point/@roots},{Opacity[0.4],Blue,PointSize[.0015],Rectangle[#-rectSize,#+rectSize]&/@resultantRoots},{Opacity[0.6],RGBColor[0,175/255,0],PointSize[.001],Rectangle[#-critPointsRectSize,#+critPointsRectSize]&/@rootsOfPPrime},{Opacity[0.7],RGBColor[0,1,0],PointSize[.0015],Triangle[{{#[[1]],#[[2]]+s/Sqrt[3]},{#[[1]]-s/2,#[[2]]-s/(2 Sqrt[3])},{#[[1]]+s/2,#[[2]]-s/(2 Sqrt[3])}}]&@centerOfMassOfZP}}],Axes->True,AxesLabel->{"Re","Im"},AspectRatio->Automatic,AxesOrigin->{Min[roots[[All,1]]]-Max[convHullDims]/30,Min[roots[[All,2]]]-Max[convHullDims]/30},PlotRange->{{Min[roots[[All,1]]]-Max[convHullDims]/30,Max[roots[[All,1]]]+Max[convHullDims]/30},{Min[roots[[All,2]]]-Max[convHullDims]/30,Max[roots[[All,2]]]+Max[convHullDims]/30}}]
+(* === BRANCH POINTS OF SYMBOL CURVE (1.4) === *)
+(* Use exact symbolic computation, then solve numerically *)
+FF = Sum[(\[Alpha]sym - k)/k! D[P, {z, k}] w^(d - k), {k, 0, d}];
+RES = Resultant[FF, D[FF, w], w];
+RESatAlpha = RES /. \[Alpha]sym -> \[Alpha];
 
-(* Export the plot *)
-Export[StringJoin["Shadow-n",ToString[n],".pdf"],finalPlot]
+branchPts = {Re@#, Im@#} & /@ 
+  (z /. NSolve[RESatAlpha == 0, z, WorkingPrecision -> precision]);
+
+(* Remove branch points that coincide with zeros of P *)
+branchPts = Select[branchPts, 
+  Min[EuclideanDistance[#, #2] & @@@ Tuples[{{#}, rootsOfP}]] > 0.01 &];
+
+(* === ISODYNAMIC LINES (for cubic P only) === *)
+isodynamicLines = {};
+If[d == 3,
+  (* Convert roots to complex numbers *)
+  a[1] = rootsOfP[[1, 1]] + I rootsOfP[[1, 2]];
+  a[2] = rootsOfP[[2, 1]] + I rootsOfP[[2, 2]];
+  a[3] = rootsOfP[[3, 1]] + I rootsOfP[[3, 2]];
+  
+  (* Coefficients for isodynamic point construction *)
+  A1 = 18 (a[1]^2 + a[2]^2 + a[3]^2 - a[1] a[2] - a[1] a[3] - a[2] a[3]);
+  A2 = (2 a[1] - a[2] - a[3])(a[1] - 2 a[2] + a[3])(a[1] + a[2] - 2 a[3]);
+  A3 = -243 ((a[1] - a[2])^2)((a[1] - a[3])^2)((a[2] - a[3])^2);
+  A4 = a[1]^2 a[2] + a[1] a[2]^2 + a[1]^2 a[3] + a[1] a[3]^2 + 
+       a[2]^2 a[3] + a[2] a[3]^2 - 6 a[1] a[2] a[3];
+  
+  (* Parametric curves for the two isodynamic lines *)
+  curve1[r_] := (1/A1)((A2 - Sqrt[A3]) r + Sqrt[A3] + 9 A4);
+  curve2[r_] := (1/A1)((A2 + Sqrt[A3]) r - Sqrt[A3] + 9 A4);
+  
+  (* Get two points on each line *)
+  pt1A = {Re@#, Im@#} &@curve1[0];
+  pt1B = {Re@#, Im@#} &@curve1[1];
+  pt2A = {Re@#, Im@#} &@curve2[0];
+  pt2B = {Re@#, Im@#} &@curve2[1];
+  
+  isodynamicLines = {
+    {Black, InfiniteLine[{pt1A, pt1B}]},
+    {Black, Dashed, InfiniteLine[{pt2A, pt2B}]}
+  };
+];
+
+(* === PLOTTING PARAMETERS === *)
+centroid = Mean[rootsOfP];
+allPts = Join[rootsOfDerivative, rootsOfP, branchPts];
+xRange = {Min[allPts[[All, 1]]], Max[allPts[[All, 1]]]};
+yRange = {Min[allPts[[All, 2]]], Max[allPts[[All, 2]]]};
+width = xRange[[2]] - xRange[[1]];
+height = yRange[[2]] - yRange[[1]];
+margin = Max[width, height]/15;
+scale = Max[width, height];
+triangleSize = scale/30;
+rectSize = scale/100;
+
+(* === CREATE PLOT === *)
+plot = Show[Graphics[{
+    (* Isodynamic lines (cubic only) *)
+    isodynamicLines,
+    
+    (* Zeros of derivative (small red dots) *)
+    {Red, PointSize[0.007], Point /@ rootsOfDerivative},
+    
+    (* Branch points (blue squares) *)
+    {Opacity[0.7], Blue, 
+     Rectangle[# - rectSize, # + rectSize] & /@ branchPts},
+    
+    (* Zeros of P (larger black dots) *)
+    {Black, PointSize[0.025], Point /@ rootsOfP},
+    
+    (* Centroid marker (green triangle) *)
+    {Opacity[0.9], RGBColor[0, 0.75, 0], 
+     Triangle[{
+       centroid + {0, triangleSize/Sqrt[3]},
+       centroid + {-triangleSize/2, -triangleSize/(2 Sqrt[3])},
+       centroid + {triangleSize/2, -triangleSize/(2 Sqrt[3])}
+     }]}
+  },
+  Axes -> True,
+  AxesLabel -> {"Re", "Im"},
+  AspectRatio -> Automatic,
+  PlotRange -> {
+    {xRange[[1]] - margin, xRange[[2]] + margin},
+    {yRange[[1]] - margin, yRange[[2]] + margin}
+  }
+]]
+
+(* === EXPORT === *)
+Export[StringJoin["RodriguesZeros-n", ToString[n], "-m", ToString[m], ".png"], 
+  plot, ImageSize -> 1024];
+
+(* Display info *)
+Print["Polynomial P = ", P];
+Print["Degree d = ", d];
+Print["n = ", n, ", m = ", m, ", \[Alpha] = m/n = ", N[\[Alpha], 4]];
+Print["Number of zeros plotted: ", Length[rootsOfDerivative]];
+Print["Branch points: ", Length[branchPts]];
